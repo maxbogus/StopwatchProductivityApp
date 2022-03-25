@@ -14,36 +14,41 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_main.view.*
 
 class MainActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     var timer = 0
     var isTimerRunning = false
-    val colorList: Array<Int> = arrayOf(Color.GRAY, Color.BLACK, Color.BLUE, Color.GREEN, Color.RED)
+    private val colorList: Array<Int> = arrayOf(Color.GRAY, Color.BLUE, Color.GREEN, Color.RED, Color.CYAN, Color.MAGENTA)
     var currentColor = Color.GRAY
     var upperLimit = Int.MAX_VALUE
-    private val updateTimer: Runnable = object : Runnable {
-        override fun run() {
-            val textView = findViewById<TextView>(R.id.textView)
-            val progressBar = findViewById<ProgressBar>(R.id.progressBar)
-            var result: Int
-            do {
-                val pickedColor = colorList[(colorList.indices).random()]
-                result = pickedColor
-            } while (pickedColor == currentColor)
-            progressBar.indeterminateTintList = ColorStateList.valueOf(result)
-            timer += 1
-            val minutes = timer / 60
-            val seconds = timer % 60
-            "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}".also {
-                textView.text = it
-                if (timer >= upperLimit) {
-                    textView.setTextColor(Color.RED)
+    private val updateTimer: Runnable by lazy {
+        object : Runnable {
+            override fun run() {
+                val textView = findViewById<TextView>(R.id.textView)
+                val progressBar = findViewById<ProgressBar>(R.id.progressBar)
+                setColor(progressBar)
+                timer += 1
+                val minutes = timer / 60
+                val seconds = timer % 60
+                "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}".also {
+                    textView.text = it
+                    if (timer >= upperLimit) {
+                        textView.setTextColor(Color.RED)
+                    }
                 }
+                handler.postDelayed(this, 1000)
             }
-            handler.postDelayed(this, 1000)
         }
+    }
+
+    private fun setColor(progressBar: ProgressBar) {
+        var result: Int
+        do {
+            val pickedColor = colorList[(colorList.indices).random()]
+            result = pickedColor
+        } while (pickedColor == currentColor)
+        progressBar.indeterminateTintList = ColorStateList.valueOf(result)
     }
 
     private val finishTimer: Runnable = Runnable {
@@ -51,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         textView.text = getString(R.string.timer_default_value)
         textView.setTextColor(Color.BLACK)
         upperLimit = Int.MAX_VALUE
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,7 +70,7 @@ class MainActivity : AppCompatActivity() {
 
         startButton.setOnClickListener {
             if (!isTimerRunning) {
-                progressBar.indeterminateTintList = ColorStateList.valueOf(currentColor)
+                setColor(progressBar)
                 progressBar.visibility = View.VISIBLE
                 settingsButton.isEnabled = false
                 handler.postDelayed(updateTimer, 1000)
